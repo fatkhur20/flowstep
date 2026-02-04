@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowStep - Web Simulasi Elektronika Edukasi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>FlowStep Edu Simulator</h1>
+      <p>Simulasi berbasis node untuk edukasi elektronik &amp; logika digital.</p>
+    </div>
+    <div class="controls">
+      <button id="runBtn">▶ Run</button>
+      <button id="pauseBtn">⏸ Pause</button>
+      <button id="stepBtn">⏭ Step</button>
+      <button id="resetBtn">🔁 Reset</button>
+      <button id="saveBtn">💾 Save</button>
+      <button id="loadBtn">📂 Load</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <section>
+        <h2>Node Palette</h2>
+        <div id="palette"></div>
+      </section>
+      <section>
+        <h2>Fault &amp; Scenario</h2>
+        <label><input type="checkbox" id="faultPower" /> Power Off</label>
+        <label><input type="checkbox" id="faultDrop" /> Tegangan Drop</label>
+        <label><input type="checkbox" id="faultOverload" /> Komponen Overload</label>
+      </section>
+      <section>
+        <h2>Explain Mode</h2>
+        <p>Klik node untuk melihat penjelasan.</p>
+        <div id="explainPanel" class="panel">Tidak ada node dipilih.</div>
+      </section>
+      <section>
+        <h2>Step Explanation</h2>
+        <div id="stepLog" class="panel"></div>
+      </section>
+      <section>
+        <h2>Disclaimer</h2>
+        <p class="disclaimer">Simulasi ini hanya untuk tujuan edukasi dan pemahaman konsep.</p>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <div class="workspace-header">
+        <span>Workspace</span>
+        <button id="toggleExplain">Toggle Explain Mode</button>
+      </div>
+      <div id="canvas">
+        <svg id="connections"></svg>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Data JSON</h3>
+      <textarea id="jsonArea" rows="10"></textarea>
+      <div class="modal-actions">
+        <button id="copyJson">Copy</button>
+        <button id="applyJson">Apply</button>
+        <button id="closeModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
