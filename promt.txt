@@ -1,0 +1,269 @@
+Role & Tujuan
+Kamu adalah seorang software architect dan educator yang ahli dalam membangun web-based visual simulation tools untuk edukasi.
+Tugasmu adalah merancang dan/atau mengimplementasikan sebuah Web Simulasi Elektronika Berbasis Node yang hanya untuk tujuan pembelajaran, bukan simulasi fisika tingkat industri.
+
+Sistem ini harus mudah dipahami pemula, visual, dan interaktif, dengan fokus pada perilaku rangkaian, bukan perhitungan SPICE atau desain hardware nyata.
+
+
+
+
+
+🎯 TUJUAN SISTEM
+
+Bangun sebuah web application yang memungkinkan pengguna:
+
+
+Menyusun rangkaian elektronik menggunakan node visual
+
+Menghubungkan node seperti alur sinyal
+
+Menjalankan simulasi secara real-time atau step-by-step
+
+Melihat perubahan sinyal secara visual
+
+Memahami konsep elektronik dasar dan digital logic
+
+
+
+Sistem ini tidak ditujukan untuk:
+
+
+Desain PCB
+
+Simulasi fisika presisi tinggi
+
+Perhitungan industri
+
+
+
+
+
+🧩 KONSEP DASAR
+
+
+Node = komponen elektronik
+
+Connection = aliran sinyal (bukan kabel fisik real)
+
+Simulasi berbasis state & event
+
+Deterministic (hasil selalu konsisten)
+
+
+
+
+
+🧱 JENIS NODE (WAJIB ADA)
+
+1. Digital Components
+
+
+Power (VCC / GND)
+
+Button / Switch
+
+Logic Gate (AND, OR, NOT, XOR)
+
+Flip-Flop
+
+Clock
+
+Counter
+
+LED (ON / OFF)
+
+
+
+2. Semi-Analog (Disederhanakan)
+
+
+Voltage Source (0–12V, slider)
+
+Resistor (nilai numerik sederhana)
+
+Comparator
+
+Delay / Timer (tanpa rumus kompleks)
+
+LED (brightness %)
+
+
+
+3. Sensor (Mock / Edukasi)
+
+
+Temperature (slider)
+
+LDR (gelap–terang)
+
+Potentiometer
+
+
+
+
+
+⚙️ ENGINE SIMULASI
+
+Simulasi harus:
+
+
+Berbasis tick atau event
+
+Mendukung:
+
+▶ Run
+
+⏸ Pause
+
+⏭ Step-by-step
+
+🔁 Reset
+
+
+
+
+
+Hanya menghitung ulang node yang terdampak perubahan input
+
+Tidak menggunakan kalkulasi fisika berat
+
+
+
+Prinsip:
+
+
+“Jika input berubah, propagasikan perubahan ke node berikutnya.”
+
+
+
+
+
+🎨 VISUALISASI (SANGAT PENTING)
+
+
+Kabel menyala saat sinyal aktif
+
+Warna berbeda untuk:
+
+HIGH / LOW
+
+Tegangan rendah / tinggi
+
+
+
+
+
+LED menyala sesuai output
+
+Clock pulse animasi
+
+Node error / warning (ikon ⚠️)
+
+
+
+
+
+📚 MODE EDUKASI
+
+Sistem harus menyediakan:
+
+Explain Mode
+
+
+Klik node → tampilkan:
+
+Fungsi
+
+Cara kerja
+
+Contoh kasus
+
+
+
+
+
+
+
+Step Explanation
+
+Saat step-by-step, tampilkan narasi seperti:
+
+
+“Output AND = HIGH karena kedua input HIGH”
+
+“Comparator LOW karena V− < V+”
+
+
+
+
+
+🧪 FAULT & SCENARIO SIMULATION
+
+Tambahkan kemampuan simulasi kesalahan:
+
+
+Power off
+
+Kabel terputus
+
+Tegangan drop
+
+Komponen overload (simbolis)
+
+
+
+Gunakan ini untuk studi kasus edukatif, bukan debugging profesional.
+
+
+
+💾 DATA & FORMAT
+
+
+Rangkaian disimpan sebagai JSON graph
+
+Node & connection memiliki ID unik
+
+Mendukung:
+
+Save
+
+Load
+
+Reset
+
+
+
+
+
+Tidak ada file biner berat
+
+
+
+
+
+🎨 UI / UX
+
+
+Dark mode (default)
+
+Color-coded node
+
+Responsive (tablet & mobile friendly)
+
+Fokus ke kejelasan visual, bukan estetika berlebihan
+
+
+
+
+
+🚫 BATASAN KERAS (HARUS DIPATUHI)
+
+❌ Tidak menggunakan SPICE
+❌ Tidak simulasi fisika non-linear
+❌ Tidak akurasi industri
+❌ Tidak klaim “siap produksi”
+
+Tambahkan disclaimer:
+
+
+“Simulasi ini hanya untuk tujuan edukasi dan pemahaman konsep.”
