@@ -293,6 +293,8 @@ const state = {
   tickInterval: null
 };
 
+const GRID_SIZE = 10;
+
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 function createNode(type, x = 60, y = 60) {
@@ -528,8 +530,10 @@ function startDrag(event, node, element) {
   const offsetY = event.clientY - node.y;
 
   function onMove(moveEvent) {
-    node.x = clamp(moveEvent.clientX - offsetX, 0, canvas.clientWidth - 150);
-    node.y = clamp(moveEvent.clientY - offsetY, 0, canvas.clientHeight - 80);
+    const nextX = clamp(moveEvent.clientX - offsetX, 0, canvas.clientWidth - 150);
+    const nextY = clamp(moveEvent.clientY - offsetY, 0, canvas.clientHeight - 80);
+    node.x = Math.round(nextX / GRID_SIZE) * GRID_SIZE;
+    node.y = Math.round(nextY / GRID_SIZE) * GRID_SIZE;
     element.style.left = `${node.x}px`;
     element.style.top = `${node.y}px`;
     drawConnections();
@@ -609,6 +613,10 @@ function drawConnections() {
     const d = `M ${startX} ${startY} C ${startX + 80} ${startY}, ${endX - 80} ${endY}, ${endX} ${endY}`;
     path.setAttribute("d", d);
     path.classList.add("connection");
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    const signalLabel = conn.broken ? "BROKEN" : fromNode.output >= 6 ? "HIGH" : "LOW";
+    title.textContent = `Signal: ${signalLabel} | ${fromNode.output.toFixed(1)}V`;
+    path.appendChild(title);
     if (conn.broken) {
       path.classList.add("broken");
     }
@@ -795,6 +803,11 @@ function updateConnectionStyles() {
     const source = state.nodes.find((node) => node.id === conn.from);
     if (!source) return;
     path.classList.remove("active", "low");
+    const title = path.querySelector("title");
+    const signalLabel = conn.broken ? "BROKEN" : source.output >= 6 ? "HIGH" : "LOW";
+    if (title) {
+      title.textContent = `Signal: ${signalLabel} | ${source.output.toFixed(1)}V`;
+    }
     if (conn.broken) return;
     if (source.output >= 6) {
       path.classList.add("active");
@@ -822,7 +835,7 @@ function resetAll() {
   pauseRun();
   state.nodes.forEach((node) => {
     node.output = 0;
-    node.state = { prevClock: 0, q: 0, count: 0, ticks: 0, queue: [], output: 0 };
+    node.state = { prevClock: 0, q: 0, count: 0, ticks: 0, queue: [], output: 0, prevInputs: null };
   });
   runStep();
 }
