@@ -420,7 +420,7 @@ function renderNode(node) {
   element.appendChild(warning);
   element.appendChild(ports);
 
-  element.addEventListener("mousedown", (event) => startDrag(event, node, element));
+  element.addEventListener("pointerdown", (event) => startDrag(event, node, element));
   element.addEventListener("click", (event) => {
     event.stopPropagation();
     showExplain(node);
@@ -522,6 +522,8 @@ function renderNode(node) {
 
 function startDrag(event, node, element) {
   if (event.target.classList.contains("port")) return;
+  event.preventDefault();
+  element.setPointerCapture(event.pointerId);
   const offsetX = event.clientX - node.x;
   const offsetY = event.clientY - node.y;
 
@@ -533,13 +535,16 @@ function startDrag(event, node, element) {
     drawConnections();
   }
 
-  function onUp() {
-    window.removeEventListener("mousemove", onMove);
-    window.removeEventListener("mouseup", onUp);
+  function onUp(upEvent) {
+    element.releasePointerCapture(upEvent.pointerId);
+    element.removeEventListener("pointermove", onMove);
+    element.removeEventListener("pointerup", onUp);
+    element.removeEventListener("pointercancel", onUp);
   }
 
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("mouseup", onUp);
+  element.addEventListener("pointermove", onMove);
+  element.addEventListener("pointerup", onUp);
+  element.addEventListener("pointercancel", onUp);
 }
 
 function handleOutputPort(event, node) {
