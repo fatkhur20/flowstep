@@ -133,6 +133,11 @@ main {
   cursor: move;
 }
 
+.node.warning {
+  border-color: var(--warning);
+  box-shadow: 0 0 12px rgba(252, 163, 17, 0.3);
+}
+
 .node .title {
   font-weight: 600;
   font-size: 0.9rem;
@@ -170,6 +175,33 @@ main {
   margin-top: 6px;
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+.warning-text {
+  display: none;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--warning);
+}
+
+.warning-text.show {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.warning-icon {
+  font-size: 0.9rem;
+}
+
+.led-indicator {
+  margin-top: 6px;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(247, 37, 133, 0.25);
+  opacity: 0.3;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 svg#connections {

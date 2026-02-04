@@ -127,6 +127,7 @@ const NODE_TYPES = {
     category: "Digital Components",
     inputs: 0,
     description: "Sinyal pulsa periodik.",
+    tick: true,
     compute: (node) => {
       node.state.ticks = (node.state.ticks ?? 0) + 1;
       const value = node.state.ticks % 2 === 0 ? 12 : 0;
@@ -210,6 +211,7 @@ const NODE_TYPES = {
     category: "Semi-Analog",
     inputs: 1,
     description: "Menunda perubahan sinyal secara sederhana.",
+    tick: true,
     compute: (node, inputs) => {
       const input = inputs[0];
       if (node.state.queue.length === 0) {
@@ -384,6 +386,10 @@ function renderNode(node) {
   status.className = "status";
   status.textContent = "Output: 0V";
 
+  const warning = document.createElement("div");
+  warning.className = "warning-text";
+  warning.innerHTML = "<span class=\"warning-icon\">⚠️</span> Input belum lengkap";
+
   const ports = document.createElement("div");
   ports.className = "ports";
 
@@ -411,6 +417,7 @@ function renderNode(node) {
   element.appendChild(title);
   element.appendChild(subtitle);
   element.appendChild(status);
+  element.appendChild(warning);
   element.appendChild(ports);
 
   element.addEventListener("mousedown", (event) => startDrag(event, node, element));
@@ -501,6 +508,13 @@ function renderNode(node) {
     }
 
     element.appendChild(slider);
+  }
+
+  if (["ledDigital", "ledAnalog"].includes(node.type)) {
+    const indicator = document.createElement("div");
+    indicator.className = "led-indicator";
+    indicator.dataset.node = node.id;
+    element.appendChild(indicator);
   }
 
   canvas.appendChild(element);
@@ -625,6 +639,47 @@ function getInputValues(node) {
   return inputs;
 }
 
+function getDownstreamMap() {
+  const map = new Map();
+  state.connections.forEach((conn) => {
+    if (!map.has(conn.from)) {
+      map.set(conn.from, new Set());
+    }
+    map.get(conn.from).add(conn.to);
+  });
+  return map;
+}
+
+function updatePortIndicators(node, inputs) {
+  const nodeElement = document.querySelector(`.node[data-id='${node.id}']`);
+  if (!nodeElement) return;
+  inputs.forEach((value, index) => {
+    const port = nodeElement.querySelector(`.port.input[data-port='${index}']`);
+    if (!port) return;
+    if (value >= 6) {
+      port.classList.add("active");
+    } else {
+      port.classList.remove("active");
+    }
+  });
+}
+
+function updateNodeStatus(node, warningText = "") {
+  const nodeElement = document.querySelector(`.node[data-id='${node.id}']`);
+  if (!nodeElement) return;
+  const status = nodeElement.querySelector(".status");
+  const warning = nodeElement.querySelector(".warning-text");
+  status.textContent = `Output: ${node.output.toFixed(1)}V`;
+  if (warningText) {
+    warning.innerHTML = `<span class="warning-icon">⚠️</span> ${warningText}`;
+    warning.classList.add("show");
+    nodeElement.classList.add("warning");
+  } else {
+    warning.classList.remove("show");
+    nodeElement.classList.remove("warning");
+  }
+}
+
 function applyFaults(value) {
   let adjusted = value;
   if (faultPower.checked) {
@@ -642,26 +697,71 @@ function applyFaults(value) {
 function runStep() {
   stepLog.innerHTML = "";
   const changedMessages = [];
+  const downstreamMap = getDownstreamMap();
+  const dirtyQueue = [];
+  const dirtySet = new Set();
 
   state.nodes.forEach((node) => {
     const inputs = getInputValues(node);
-    const config = NODE_TYPES[node.type];
-    const result = config.compute(node, inputs);
-    const adjustedValue = applyFaults(result.value);
+    node.state.prevInputs = node.state.prevInputs || new Array(inputs.length).fill(0);
+    const inputChanged = inputs.some((value, index) => value !== node.state.prevInputs[index]);
+    node.state.prevInputs = inputs;
 
-    if (node.output !== adjustedValue) {
-      node.output = adjustedValue;
+    updatePortIndicators(node, inputs);
+
+    const config = NODE_TYPES[node.type];
+    if (config.inputs === 0 || config.tick || inputChanged) {
+      if (!dirtySet.has(node.id)) {
+        dirtyQueue.push({ node, inputs });
+        dirtySet.add(node.id);
+      }
+    }
+
+    const missingInputs = inputs.filter((value, index) => {
+      const hasConnection = state.connections.some((conn) => conn.to === node.id && conn.inputIndex === index);
+      return !hasConnection;
+    });
+    if (!dirtySet.has(node.id)) {
+      updateNodeStatus(node, missingInputs.length ? "Input belum lengkap" : "");
+    }
+  });
+
+  while (dirtyQueue.length) {
+    const { node, inputs } = dirtyQueue.shift();
+    const config = NODE_TYPES[node.type];
+    const latestInputs = inputs ?? getInputValues(node);
+    const result = config.compute(node, latestInputs);
+    const adjustedValue = applyFaults(result.value);
+    const outputChanged = node.output !== adjustedValue;
+
+    node.output = adjustedValue;
+
+    if (outputChanged) {
       const line = document.createElement("div");
       line.textContent = result.message;
       changedMessages.push(line);
+      const downstream = downstreamMap.get(node.id);
+      if (downstream) {
+        downstream.forEach((nextId) => {
+          if (!dirtySet.has(nextId)) {
+            const nextNode = state.nodes.find((n) => n.id === nextId);
+            if (nextNode) {
+              dirtyQueue.push({ node: nextNode, inputs: getInputValues(nextNode) });
+              dirtySet.add(nextId);
+            }
+          }
+        });
+      }
     }
 
-    const nodeElement = document.querySelector(`.node[data-id='${node.id}']`);
-    if (nodeElement) {
-      const status = nodeElement.querySelector(".status");
-      status.textContent = `Output: ${node.output.toFixed(1)}V`;
-    }
-  });
+    const missingInputs = latestInputs.filter((value, index) => {
+      const hasConnection = state.connections.some((conn) => conn.to === node.id && conn.inputIndex === index);
+      return !hasConnection;
+    });
+    const warningText = missingInputs.length ? "Input belum lengkap" : "";
+    updateNodeStatus(node, warningText);
+    updateLedIndicator(node);
+  }
 
   if (changedMessages.length === 0) {
     const line = document.createElement("div");
@@ -671,6 +771,15 @@ function runStep() {
 
   changedMessages.forEach((line) => stepLog.appendChild(line));
   updateConnectionStyles();
+}
+
+function updateLedIndicator(node) {
+  if (!["ledDigital", "ledAnalog"].includes(node.type)) return;
+  const indicator = document.querySelector(`.led-indicator[data-node='${node.id}']`);
+  if (!indicator) return;
+  const intensity = node.type === "ledDigital" ? (node.output >= 6 ? 1 : 0.2) : node.output / 12;
+  indicator.style.opacity = intensity.toFixed(2);
+  indicator.style.boxShadow = `0 0 ${6 + intensity * 10}px rgba(247, 37, 133, ${0.3 + intensity * 0.6})`;
 }
 
 function updateConnectionStyles() {
@@ -770,6 +879,8 @@ toggleExplain.addEventListener("click", () => {
   state.explainMode = !state.explainMode;
   toggleExplain.textContent = state.explainMode ? "Explain Mode: ON" : "Explain Mode: OFF";
 });
+
+toggleExplain.textContent = state.explainMode ? "Explain Mode: ON" : "Explain Mode: OFF";
 
 renderPalette();
 runStep();
